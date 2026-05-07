@@ -1,0 +1,12 @@
+/* Theme overrides and component-specific tokens */
+.theme-gold   { color: var(--gold); }
+.theme-silver { color: var(--silver); }
+.theme-jade   { color: var(--jade-light); }
+.theme-saffron { color: var(--saffron); }
+.theme-cream  { color: var(--cream); }
+
+.bg-navy-mid { background: var(--navy-mid); }
+.bg-navy     { background: var(--navy); }
+.bg-deep-navy { background: var(--deep-navy); }
+
+.border-gold { border-color: rgba(201,168,76,0.2); }

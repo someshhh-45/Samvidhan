@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: samvidhan-ai-backend
+    runtime: python
+    pythonVersion: 3.11
+    buildCommand: pip install -r ai_service/requirements.txt
+    startCommand: cd ai_service && python app.py
+    envVars:
+      - key: GROQ_API_KEY
+        scope: run
+        sync: false
+      - key: GROQ_MODEL
+        value: llama-3.3-70b-versatile
+      - key: LLM_PROVIDER
+        value: groq
+    healthCheckPath: /
+    plans:
+      - name: free
+        instanceType: free
+        memoryMB: 512
+        diskGB: 1
+    autoDeploy: true
+    repo: https://github.com/your-username/samvidhan.git
+    branch: main
+    rootDir: .
