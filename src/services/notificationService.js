@@ -2,20 +2,14 @@ import api from './api.js'
 
 const notificationService = {
 
-  // =====================================
-  // GET ALL NOTIFICATIONS
-  // =====================================
-
   getAll: async (email) => {
 
-    return await api.get(
+    const response = await api.get(
       `/notifications/${email}`
     )
-  },
 
-  // =====================================
-  // OPTIONAL FUTURE FEATURES
-  // =====================================
+    return response
+  },
 
   markRead: async (id) => {
 

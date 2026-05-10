@@ -2,56 +2,56 @@ package com.example.demo;
 
 public class DashboardStatsResponse {
 
-    private long totalReviews;
+    private long total;
 
-    private long pendingReviews;
+    private long pending;
 
-    private long assignedReviews;
+    private long verified;
 
-    private long verifiedReviews;
+    private long rejected;
 
-    private long rejectedReviews;
+    public DashboardStatsResponse(
+            long total,
+            long pending,
+            long verified,
+            long rejected
+    ) {
 
-    public DashboardStatsResponse() {
+        this.total = total;
+        this.pending = pending;
+        this.verified = verified;
+        this.rejected = rejected;
     }
 
-    public long getTotalReviews() {
-        return totalReviews;
+    public long getTotal() {
+        return total;
     }
 
-    public void setTotalReviews(long totalReviews) {
-        this.totalReviews = totalReviews;
+    public void setTotal(long total) {
+        this.total = total;
     }
 
-    public long getPendingReviews() {
-        return pendingReviews;
+    public long getPending() {
+        return pending;
     }
 
-    public void setPendingReviews(long pendingReviews) {
-        this.pendingReviews = pendingReviews;
+    public void setPending(long pending) {
+        this.pending = pending;
     }
 
-    public long getAssignedReviews() {
-        return assignedReviews;
+    public long getVerified() {
+        return verified;
     }
 
-    public void setAssignedReviews(long assignedReviews) {
-        this.assignedReviews = assignedReviews;
+    public void setVerified(long verified) {
+        this.verified = verified;
     }
 
-    public long getVerifiedReviews() {
-        return verifiedReviews;
+    public long getRejected() {
+        return rejected;
     }
 
-    public void setVerifiedReviews(long verifiedReviews) {
-        this.verifiedReviews = verifiedReviews;
-    }
-
-    public long getRejectedReviews() {
-        return rejectedReviews;
-    }
-
-    public void setRejectedReviews(long rejectedReviews) {
-        this.rejectedReviews = rejectedReviews;
+    public void setRejected(long rejected) {
+        this.rejected = rejected;
     }
 }

@@ -13,14 +13,17 @@ public class Notification {
     @GeneratedValue
     private UUID id;
 
+    @Column(name = "user_email")
     private String userEmail;
 
     private String title;
 
     private String message;
 
+    @Column(name = "read_status")
     private boolean readStatus;
 
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     public UUID getId() {

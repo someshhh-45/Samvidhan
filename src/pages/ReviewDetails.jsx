@@ -42,6 +42,7 @@ pdfjs.GlobalWorkerOptions.workerSrc =
   ).toString()
 
 const MOCK_FIELDS = [
+
   {
     key: 'article',
     icon: '⚖️',
@@ -134,7 +135,7 @@ export default function ReviewDetails() {
           setAnnotations([])
         }
 
-        // LOAD REAL DB HIGHLIGHTS
+        // LOAD HIGHLIGHTS
 
         try {
 
@@ -162,8 +163,11 @@ export default function ReviewDetails() {
         console.error(err)
 
         setError(
+
           err?.response?.data?.message ||
+
           err?.message ||
+
           'Failed to load review'
         )
       })
@@ -195,10 +199,13 @@ export default function ReviewDetails() {
   if (!review) {
 
     return (
+
       <div className="page-body">
+
         <ErrorAlert
           message="Review not found"
         />
+
       </div>
     )
   }
@@ -248,7 +255,73 @@ export default function ReviewDetails() {
           />
 
           {
+            r.humanVerified ? (
+
+              <span
+                style={{
+                  background:
+                    'rgba(46, 204, 113, 0.15)',
+
+                  color:
+                    '#2ECC71',
+
+                  padding:
+                    '6px 12px',
+
+                  borderRadius: 20,
+
+                  fontSize: 10,
+
+                  fontFamily:
+                    'Cinzel, serif',
+
+                  letterSpacing: 1,
+
+                  textTransform:
+                    'uppercase'
+                }}
+              >
+
+                ✅ Human Verified
+
+              </span>
+
+            ) : (
+
+              <span
+                style={{
+                  background:
+                    'rgba(241, 196, 15, 0.15)',
+
+                  color:
+                    '#F1C40F',
+
+                  padding:
+                    '6px 12px',
+
+                  borderRadius: 20,
+
+                  fontSize: 10,
+
+                  fontFamily:
+                    'Cinzel, serif',
+
+                  letterSpacing: 1,
+
+                  textTransform:
+                    'uppercase'
+                }}
+              >
+
+                ⏳ Awaiting Verification
+
+              </span>
+            )
+          }
+
+          {
             r.confidenceScore != null && (
+
               <ConfidenceBadge
                 score={
                   r.confidenceScore
@@ -333,18 +406,12 @@ export default function ReviewDetails() {
 
             </div>
 
-            {/* SCROLLABLE PDF BODY */}
-
             <div
               className="pdf-body"
               style={{
-
                 overflowY: 'auto',
-
                 maxHeight: '85vh',
-
                 paddingRight: 8,
-
                 scrollbarWidth: 'thin',
               }}
             >
@@ -417,8 +484,6 @@ export default function ReviewDetails() {
                 )
               }
 
-              {/* REAL DB HIGHLIGHTS */}
-
               <div
                 style={{
                   marginTop: 24,
@@ -433,6 +498,7 @@ export default function ReviewDetails() {
 
               {
                 r.summary && (
+
                   <div
                     style={{
                       marginTop: 18,
@@ -442,7 +508,9 @@ export default function ReviewDetails() {
                         'var(--silver-light)',
                     }}
                   >
+
                     {r.summary}
+
                   </div>
                 )
               }
@@ -526,86 +594,6 @@ export default function ReviewDetails() {
 
                     </div>
 
-                    <div className="field-item">
-
-                      <span className="field-icon">
-                        🏛️
-                      </span>
-
-                      <div className="field-info">
-
-                        <div className="field-label">
-                          Department
-                        </div>
-
-                        <div className="field-value">
-
-                          {
-                            editedFields.department ||
-                            r.department ||
-                            '—'
-                          }
-
-                        </div>
-
-                      </div>
-
-                    </div>
-
-                    <div className="field-item">
-
-                      <span className="field-icon">
-                        ⚡
-                      </span>
-
-                      <div className="field-info">
-
-                        <div className="field-label">
-                          Priority
-                        </div>
-
-                        <div className="field-value">
-
-                          {
-                            editedFields.priority ||
-                            r.priority ||
-                            '—'
-                          }
-
-                        </div>
-
-                      </div>
-
-                    </div>
-
-                    <div className="field-item">
-
-                      <span className="field-icon">
-                        📅
-                      </span>
-
-                      <div className="field-info">
-
-                        <div className="field-label">
-                          Due Date
-                        </div>
-
-                        <div className="field-value">
-
-                          {
-                            r.dueDate
-                              ? formatDate(
-                                  r.dueDate
-                                )
-                              : '—'
-                          }
-
-                        </div>
-
-                      </div>
-
-                    </div>
-
                   </div>
                 )
               }
@@ -626,12 +614,84 @@ export default function ReviewDetails() {
 
               </div>
 
-              <ReviewActions
-                reviewId={id}
-                onDone={
-                  handleDone
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12
+                }}
+              >
+
+                {
+                  !r.humanVerified && (
+
+                    <button
+
+                      className="
+                        action-btn
+                        btn-edit
+                      "
+
+                      onClick={async () => {
+
+                        try {
+
+                          await fetch(
+
+                            `http://localhost:8083/api/reviews/${id}/human-verify`,
+
+                            {
+                              method: 'POST',
+
+                              headers: {
+
+                                Authorization:
+                                  `Bearer ${
+                                    localStorage.getItem(
+                                      'token'
+                                    )
+                                  }`
+                              }
+                            }
+                          )
+
+                          window.location.reload()
+
+                        } catch(error) {
+
+                          console.error(error)
+                        }
+                      }}
+                    >
+
+                      Human Verify
+
+                    </button>
+                  )
                 }
-              />
+
+                <div
+                  style={{
+                    opacity:
+                      r.humanVerified
+                        ? 1
+                        : 0.5,
+
+                    pointerEvents:
+                      r.humanVerified
+                        ? 'auto'
+                        : 'none'
+                  }}
+                >
+
+                  <ReviewActions
+                    reviewId={id}
+                    onDone={handleDone}
+                  />
+
+                </div>
+
+              </div>
 
             </div>
 

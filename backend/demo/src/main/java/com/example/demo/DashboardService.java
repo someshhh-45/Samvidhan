@@ -12,31 +12,35 @@ public class DashboardService {
     public DashboardStatsResponse getDashboardStats() {
 
         DashboardStatsResponse response =
-                new DashboardStatsResponse();
+                new DashboardStatsResponse(
 
-        response.setTotalReviews(
+                        0,
+                        0,
+                        0,
+                        0
+                );
+
+        response.setTotal(
+
                 reviewTaskRepository.count()
         );
 
-        response.setPendingReviews(
+        response.setPending(
+
                 reviewTaskRepository.findByStatus(
                         ReviewStatus.PENDING
                 ).size()
         );
 
-        response.setAssignedReviews(
-                reviewTaskRepository.findByStatus(
-                        ReviewStatus.ASSIGNED
-                ).size()
-        );
+        response.setVerified(
 
-        response.setVerifiedReviews(
                 reviewTaskRepository.findByStatus(
                         ReviewStatus.VERIFIED
                 ).size()
         );
 
-        response.setRejectedReviews(
+        response.setRejected(
+
                 reviewTaskRepository.findByStatus(
                         ReviewStatus.REJECTED
                 ).size()

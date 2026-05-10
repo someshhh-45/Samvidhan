@@ -17,20 +17,13 @@ public class NotificationService {
             String message
     ) {
 
-        Notification notification =
-                new Notification();
+        Notification notification = new Notification();
 
-        notification.setUserEmail(
-                userEmail
-        );
+        notification.setUserEmail(userEmail);
 
-        notification.setTitle(
-                title
-        );
+        notification.setTitle(title);
 
-        notification.setMessage(
-                message
-        );
+        notification.setMessage(message);
 
         notification.setReadStatus(false);
 

@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
+@CrossOrigin("*")
 public class AuthController {
 
     @Autowired
@@ -13,6 +14,9 @@ public class AuthController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private AuditLogService auditService;
 
     // LOGIN
     @PostMapping("/login")
@@ -40,14 +44,27 @@ public class AuthController {
                     .body("Invalid credentials");
         }
 
+        // AUDIT LOG
+        auditService.logAction(
+
+                AuditAction.LOGIN,
+
+                user.getEmail(),
+
+                "User logged into system"
+        );
+
         String token =
                 jwtService.generateToken(
                         user.getEmail()
                 );
 
         return ResponseEntity.ok(
+
                 new AuthResponse(
+
                         token,
+
                         user
                 )
         );
@@ -56,6 +73,7 @@ public class AuthController {
     // CURRENT USER
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(
+
             @RequestHeader("Authorization")
             String authHeader
     ) {

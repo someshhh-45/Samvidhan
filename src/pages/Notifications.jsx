@@ -1,21 +1,18 @@
-import React, { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
-import useNotifications from '../hooks/useNotifications.js'
+import notificationService from '../services/notificationService'
 
-import notificationService from '../services/notificationService.js'
+function Notification() {
 
-import { timeAgo } from '../utils/formatDate.js'
+  const [notifications, setNotifications] =
+    useState([])
 
-import EmptyState from '../components/common/EmptyState.jsx'
-
-export default function Notifications() {
-
-  const {
-    notifications,
-    setNotifications,
-  } = useNotifications()
+  const [loading, setLoading] =
+    useState(true)
 
   useEffect(() => {
+
+    console.log("FETCH RUNNING")
 
     fetchNotifications()
 
@@ -23,152 +20,101 @@ export default function Notifications() {
 
   const fetchNotifications = async () => {
 
-    try {
+    console.log("API CALL START")
 
-      const email =
-        'admin@gmail.com'
+    try {
 
       const response =
         await notificationService.getAll(
-          email
+          'admin@gov.in'
         )
 
-      console.log(
-        'NOTIFICATION RESPONSE:',
-        response
+      console.log("NOTIFICATION DATA")
+
+      console.log(response)
+
+      setNotifications(
+
+        Array.isArray(response)
+          ? response
+          : []
+
       )
 
-      setNotifications(response)
+    } catch(error) {
 
-    } catch (err) {
-
-      console.error(err)
+      console.error(
+        'Notification Error:',
+        error
+      )
 
       setNotifications([])
+
+    } finally {
+
+      setLoading(false)
     }
   }
 
+  if(loading) {
+
+    return <p>Loading notifications...</p>
+  }
+
   return (
-    <>
-      <div className="page-header">
 
-        <h1 className="page-title">
-          Notifi<em>cations</em>
-        </h1>
+    <div className="p-4">
 
-        <p className="page-subtitle">
-          System alerts, assignment updates,
-          and deadline reminders
-        </p>
+      <h2 className="text-xl font-bold mb-4">
+        Notifications
+      </h2>
 
-      </div>
+      {
+        !notifications ||
+        notifications.length === 0 ? (
 
-      <div className="page-body">
+          <p>No notifications found</p>
 
-        <div className="dash-panel">
+        ) : (
 
-          {notifications &&
-          notifications.length > 0 ? (
+          notifications.map((notification) => (
 
-            notifications.map((n) => (
+            <div
+              key={notification.id}
+              className="
+                border
+                rounded
+                p-3
+                mb-3
+                shadow-sm
+              "
+            >
 
-              <div
-                key={n.id}
-                style={{
-                  display: 'flex',
-                  gap: 16,
-                  padding: '16px 20px',
-                  borderBottom:
-                    '1px solid rgba(255,255,255,0.04)',
-                  background:
-                    !n.readStatus
-                      ? 'rgba(201,168,76,0.03)'
-                      : 'transparent',
-                }}
-              >
+              <h3 className="font-semibold">
 
-                <div
-                  style={{
-                    paddingTop: 5,
-                  }}
-                >
+                {notification.title}
 
-                  <div
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      background:
-                        !n.readStatus
-                          ? 'var(--gold)'
-                          : 'rgba(255,255,255,0.1)',
-                    }}
-                  />
+              </h3>
 
-                </div>
+              <p>
 
-                <div style={{ flex: 1 }}>
+                {notification.message}
 
-                  <div
-                    style={{
-                      fontSize: 13,
-                      color:
-                        !n.readStatus
-                          ? 'var(--cream)'
-                          : 'var(--silver)',
-                      marginBottom: 4,
-                    }}
-                  >
+              </p>
 
-                    <strong>
-                      {n.title}
-                    </strong>
+              <small>
 
-                    <br />
+                {notification.createdAt}
 
-                    {n.message}
+              </small>
 
-                  </div>
+            </div>
+          ))
+        )
+      }
 
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: 'var(--silver)',
-                    }}
-                  >
-
-                    {timeAgo(n.createdAt)}
-
-                  </div>
-
-                </div>
-
-                {!n.readStatus && (
-
-                  <span
-                    className="status-badge status-pending"
-                  >
-                    New
-                  </span>
-
-                )}
-
-              </div>
-            ))
-
-          ) : (
-
-            <EmptyState
-              icon="🔔"
-              title="No notifications"
-              desc="You are all caught up."
-            />
-
-          )}
-
-        </div>
-
-      </div>
-    </>
+    </div>
   )
 }
+
+export default Notification

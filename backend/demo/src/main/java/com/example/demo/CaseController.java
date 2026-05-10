@@ -841,7 +841,7 @@ public class CaseController {
     private String getField(
             com.fasterxml.jackson.databind.JsonNode node,
             String field
-    ) {
+    ) { 
 
         var n =
                 node.get(field);

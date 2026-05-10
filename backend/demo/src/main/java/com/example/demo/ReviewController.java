@@ -11,6 +11,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/reviews")
+@CrossOrigin("*")
 public class ReviewController {
 
     @Autowired
@@ -20,7 +21,7 @@ public class ReviewController {
     private CaseRepository caseRepository;
 
     @Autowired
-    private AuditService auditService;
+    private AuditLogService auditService;
 
     @Autowired
     private FieldReviewRepository fieldReviewRepository;
@@ -40,7 +41,7 @@ public class ReviewController {
     @Autowired
     private DepartmentAccessService departmentAccessService;
 
-    // GET ALL REVIEWS WITH STATUS FILTER
+    // GET ALL REVIEWS
     @GetMapping
     public ResponseEntity<?> getAllReviews(
 
@@ -51,7 +52,6 @@ public class ReviewController {
 
     ) {
 
-        // RETURN ALL
         if (
                 status == null
                         || status.isBlank()
@@ -108,8 +108,6 @@ public class ReviewController {
         ReviewTask task =
                 new ReviewTask();
 
-        // REAL CASE RELATION
-
         Case caseEntity =
                 caseRepository.findById(
                         Long.parseLong(
@@ -149,6 +147,8 @@ public class ReviewController {
                 ReviewStatus.PENDING
         );
 
+        task.setHumanVerified(false);
+
         task.setDueDate(
                 request.getDueDate()
         );
@@ -160,8 +160,11 @@ public class ReviewController {
         reviewTaskRepository.save(task);
 
         auditService.logAction(
+
                 AuditAction.CREATE_REVIEW,
+
                 request.getAssignedTo(),
+
                 "Created review task"
         );
 
@@ -208,15 +211,65 @@ public class ReviewController {
         reviewTaskRepository.save(task);
 
         notificationService.createNotification(
+
                 request.getReviewer(),
+
                 "New Review Assigned",
+
                 "You have been assigned review task"
         );
 
         auditService.logAction(
+
                 AuditAction.ASSIGN_REVIEWER,
+
                 request.getReviewer(),
+
                 "Assigned review task"
+        );
+
+        return ResponseEntity.ok(task);
+    }
+
+    // HUMAN VERIFY REVIEW
+    @PostMapping("/{id}/human-verify")
+    public ResponseEntity<?> humanVerify(
+
+            @PathVariable String id,
+
+            Principal principal
+    ) {
+
+        ReviewTask task =
+
+                reviewTaskRepository.findById(
+
+                        UUID.fromString(id)
+
+                ).orElseThrow();
+
+        task.setHumanVerified(true);
+
+        reviewTaskRepository.save(task);
+
+        notificationService.createNotification(
+
+                task.getAssignedTo(),
+
+                "Human Verification Completed",
+
+                "Review task verified successfully"
+        );
+
+        auditService.logAction(
+
+                AuditAction.VERIFY_REVIEW,
+
+                principal != null
+                        ? principal.getName()
+                        : "SYSTEM",
+
+                "Human verified review task"
         );
 
         return ResponseEntity.ok(task);
@@ -238,6 +291,25 @@ public class ReviewController {
                 userRepository.findByEmail(
                         principal.getName()
                 ).orElseThrow();
+
+        // HUMAN VERIFICATION CHECK
+        if (
+
+            !Boolean.TRUE.equals(
+
+                    task.getHumanVerified()
+            )
+        ) {
+
+            return ResponseEntity
+
+                    .badRequest()
+
+                    .body(
+
+                            "Human verification required"
+                    );
+        }
 
         if (
                 !departmentAccessService.canAccess(
@@ -264,9 +336,21 @@ public class ReviewController {
 
         reviewTaskRepository.save(task);
 
+        notificationService.createNotification(
+
+                task.getAssignedTo(),
+
+                "Review Approved",
+
+                "Review approved successfully"
+        );
+
         auditService.logAction(
+
                 AuditAction.VERIFY_REVIEW,
+
                 user.getEmail(),
+
                 "Verified review task"
         );
 
@@ -296,183 +380,70 @@ public class ReviewController {
 
         reviewTaskRepository.save(task);
 
+        notificationService.createNotification(
+
+                task.getAssignedTo(),
+
+                "Review Rejected",
+
+                "Review task rejected"
+        );
+
         auditService.logAction(
+
                 AuditAction.REJECT_REVIEW,
+
                 principal != null
                         ? principal.getName()
                         : "SYSTEM",
+
                 "Rejected review task"
         );
 
         return ResponseEntity.ok(task);
     }
 
-    // UPDATE REVIEW
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateReview(
-            @PathVariable String id,
-            @RequestBody ReviewTask updatedTask
-    ) {
-
-        ReviewTask task =
-                reviewTaskRepository.findById(
-                        UUID.fromString(id)
-                ).orElseThrow();
-
-        task.setDepartment(
-                updatedTask.getDepartment()
-        );
-
-        task.setPriority(
-                updatedTask.getPriority()
-        );
-
-        task.setDueDate(
-                updatedTask.getDueDate()
-        );
-
-        task.setTitle(
-                updatedTask.getTitle()
-        );
-
-        task.setFileName(
-                updatedTask.getFileName()
-        );
-
-        task.setSummary(
-                updatedTask.getSummary()
-        );
-
-        reviewTaskRepository.save(task);
-
-        return ResponseEntity.ok(task);
-    }
-
-    // FIELD LEVEL EDIT
-    @PatchMapping("/edit-field/{reviewId}")
-    public ResponseEntity<?> editField(
-            @PathVariable String reviewId,
-            @RequestBody FieldEditRequest request
-    ) {
-
-        FieldReview fieldReview =
-                new FieldReview();
-
-        fieldReview.setReviewTaskId(
-                UUID.fromString(reviewId)
-        );
-
-        fieldReview.setFieldName(
-                request.getFieldName()
-        );
-
-        fieldReview.setOldValue(
-                request.getOldValue()
-        );
-
-        fieldReview.setNewValue(
-                request.getNewValue()
-        );
-
-        fieldReview.setEditedBy(
-                request.getEditedBy()
-        );
-
-        fieldReview.setEditedAt(
-                LocalDateTime.now()
-        );
-
-        fieldReviewRepository.save(
-                fieldReview
-        );
-
-        auditService.logAction(
-                AuditAction.CREATE_REVIEW,
-                request.getEditedBy(),
-                "Edited field"
-        );
-
-        return ResponseEntity.ok(
-                fieldReview
-        );
-    }
-
-    // CREATE PDF ANNOTATION
-    @PostMapping("/annotations/{reviewId}")
-    public ResponseEntity<?> createAnnotation(
-            @PathVariable String reviewId,
-            @RequestBody PdfAnnotationRequest request
-    ) {
-
-        PdfAnnotation annotation =
-                new PdfAnnotation();
-
-        annotation.setReviewTaskId(
-                UUID.fromString(reviewId)
-        );
-
-        annotation.setFieldName(
-                request.getFieldName()
-        );
-
-        annotation.setPageNumber(
-                request.getPageNumber()
-        );
-
-        annotation.setX(
-                request.getX()
-        );
-
-        annotation.setY(
-                request.getY()
-        );
-
-        annotation.setWidth(
-                request.getWidth()
-        );
-
-        annotation.setHeight(
-                request.getHeight()
-        );
-
-        pdfAnnotationRepository.save(
-                annotation
-        );
-
-        return ResponseEntity.ok(
-                annotation
-        );
-    }
-
-    // GET PDF ANNOTATIONS
-    @GetMapping("/annotations/{reviewId}")
-    public ResponseEntity<?> getAnnotations(
-            @PathVariable String reviewId
-    ) {
-
-        List<PdfAnnotation> annotations =
-                pdfAnnotationRepository
-                        .findByReviewTaskId(
-                                UUID.fromString(
-                                        reviewId
-                                )
-                        );
-
-        return ResponseEntity.ok(
-                annotations
-        );
-    }
-
     // REVIEW STATS
     @GetMapping("/stats")
     public ResponseEntity<?> getStats() {
 
+        long total =
+                reviewTaskRepository.count();
+
+        long pending =
+                reviewTaskRepository
+                        .findByStatus(
+                                ReviewStatus.PENDING
+                        ).size();
+
+        long verified =
+                reviewTaskRepository
+                        .findByStatus(
+                                ReviewStatus.VERIFIED
+                        ).size();
+
+        long rejected =
+                reviewTaskRepository
+                        .findByStatus(
+                                ReviewStatus.REJECTED
+                        ).size();
+
         return ResponseEntity.ok(
-                reviewTaskRepository.count()
+
+                new DashboardStatsResponse(
+
+                        total,
+
+                        pending,
+
+                        verified,
+
+                        rejected
+                )
         );
     }
 
-    // AUDIT LOGS
+    // AUDIT LOGS TEST
     @GetMapping("/audit-logs")
     public ResponseEntity<?> getAuditLogs() {
 

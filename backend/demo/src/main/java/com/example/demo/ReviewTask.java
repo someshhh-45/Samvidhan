@@ -54,6 +54,9 @@ public class ReviewTask {
     // AI CONFIDENCE SCORE
     private Double confidenceScore;
 
+    // HUMAN VERIFICATION
+    private Boolean humanVerified = false;
+
     public ReviewTask() {
     }
 
@@ -194,6 +197,21 @@ public class ReviewTask {
                 confidenceScore;
     }
 
+    // HUMAN VERIFIED
+
+    public Boolean getHumanVerified() {
+
+        return humanVerified;
+    }
+
+    public void setHumanVerified(
+            Boolean humanVerified
+    ) {
+
+        this.humanVerified =
+                humanVerified;
+    }
+
     @PrePersist
     public void prePersist() {
 
@@ -207,6 +225,11 @@ public class ReviewTask {
 
             status =
                     ReviewStatus.PENDING;
+        }
+
+        if (humanVerified == null) {
+
+            humanVerified = false;
         }
     }
 }

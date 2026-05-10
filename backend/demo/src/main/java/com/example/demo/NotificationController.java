@@ -5,21 +5,23 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/notifications")
+@RequestMapping("/api/notifications")
+@CrossOrigin("*")
 public class NotificationController {
 
     @Autowired
     private NotificationRepository notificationRepository;
 
-    @GetMapping("/{email}")
+    @GetMapping("/{userEmail}")
     public ResponseEntity<?> getNotifications(
-            @PathVariable String email
+            @PathVariable String userEmail
     ) {
 
         return ResponseEntity.ok(
+
                 notificationRepository
                         .findByUserEmailOrderByCreatedAtDesc(
-                                email
+                                userEmail
                         )
         );
     }

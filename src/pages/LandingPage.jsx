@@ -78,7 +78,13 @@ function FeatureCard({ icon, title, desc }) {
 }
 
 /* ── Upload Drop Zone ── */
-function DropZone({ setExtractedData }) {
+function DropZone({
+
+  setExtractedData,
+
+  fetchPendingReview
+
+}) {
   const [dragging, setDragging] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -121,6 +127,8 @@ function DropZone({ setExtractedData }) {
       setExtractedData(extractionRes.data)
 
       alert('AI Extraction Completed')
+
+      fetchPendingReview()
 
     } catch (err) {
       console.error(err)
@@ -266,19 +274,46 @@ const [c3, r3] = useCountUp(stats.departments)
   ]
 
   const fetchPendingReview = async () => {
-    try {
-      const res = await axios.get(
-        'http://localhost:8083/api/reviews/pending'
+
+  try {
+
+    const res = await axios.get(
+
+      'http://localhost:8083/api/reviews/pending'
+    )
+
+    if (
+
+      Array.isArray(res.data)
+
+      &&
+
+      res.data.length > 0
+    ) {
+
+      const latestReview =
+
+        res.data.sort(
+
+          (a, b) =>
+
+            new Date(b.createdAt)
+
+            -
+
+            new Date(a.createdAt)
+        )[0]
+
+      setReviewTask(
+        latestReview
       )
-
-      if (res.data.length > 0) {
-        setReviewTask(res.data[0])
-      }
-
-    } catch (err) {
-      console.error(err)
     }
+
+  } catch (err) {
+
+    console.error(err)
   }
+}
   const fetchDashboardStats = async () => {
 
   try {
@@ -532,7 +567,16 @@ const [c3, r3] = useCountUp(stats.departments)
             every relevant field with confidence scores in seconds.
           </p>
           <div className="upload-grid">
-            <DropZone setExtractedData={setExtractedData} />
+            <DropZone
+
+              setExtractedData={
+                setExtractedData
+              }
+
+              fetchPendingReview={
+                fetchPendingReview
+              }
+            />
             <div className="extraction-panel">
               <div className="extraction-header">
                 <span className="extraction-title">Extracted Fields</span>
@@ -588,25 +632,60 @@ const [c3, r3] = useCountUp(stats.departments)
               </div>
               <div className="pdf-body">
                 <p style={{ marginBottom: 16 }}>
-                  IN THE MATTER OF CONSTITUTIONAL COMPLIANCE — DIRECTIVE PRINCIPLES OF STATE POLICY
+                  IN THE MATTER OF CONSTITUTIONAL COMPLIANCE
+                  — DIRECTIVE PRINCIPLES OF STATE POLICY
                 </p>
-                <p style={{ marginBottom: 14, lineHeight: 1.9 }}>
-                  The <span className="highlight highlight-gold">Ministry of Health and Family Welfare</span> is hereby directed to
-                  submit an implementation report under{' '}
-                  <span className="highlight highlight-gold">Article 47</span> of the Constitution of India,
-                  pertaining to the duty of the State to raise the level of nutrition and the standard of living.
+                <p
+                  style={{
+                    marginBottom: 14,
+                    lineHeight: 1.9,
+                  }}
+                >
+                  The
+                  <span className="highlight highlight-jade">
+                    {
+                      extractedData?.department || 'Department'
+                    }
+                  </span>
+                  {' '}is hereby directed to submit an implementation report under
+                  <span className="highlight highlight-gold">
+                    {
+                      extractedData?.article || 'Article'
+                    }
+                  </span>
+                  {' '}of the Constitution of India, pertaining to constitutional compliance
+                  and governance directives.
                 </p>
-                <p style={{ marginBottom: 14, lineHeight: 1.9 }}>
-                  Compliance report must be filed by{' '}
-                  <span className="highlight highlight-saffron">31 March 2024</span>.
-                  The report shall be submitted to the{' '}
-                  <span className="highlight highlight-jade">Department of Constitutional Affairs</span>,
-                  Ministry of Law and Justice, for review and verification.
+                <p
+                  style={{
+                    marginBottom: 14,
+                    lineHeight: 1.9,
+                  }}
+                >
+                  Compliance report must be filed by
+                  <span className="highlight highlight-saffron">
+                    {
+                      extractedData?.deadline || 'Deadline'
+                    }
+                  </span>
+                  . The report shall be submitted for review and verification.
                 </p>
-                <div style={{ marginTop: 20, padding: '10px 14px', background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.15)', fontSize: 11, color: 'var(--silver)' }}>
-                  <span style={{ color: 'var(--gold)' }}>■ </span> Directive &nbsp;&nbsp;
-                  <span style={{ color: 'var(--jade-light)' }}>■ </span> Department &nbsp;&nbsp;
-                  <span style={{ color: 'var(--saffron)' }}>■ </span> Date
+                <div
+                  style={{
+                    marginTop: 20,
+                    padding: '10px 14px',
+                    background: 'rgba(201,168,76,0.05)',
+                    border: '1px solid rgba(201,168,76,0.15)',
+                    fontSize: 11,
+                    color: 'var(--silver)',
+                  }}
+                >
+                  <span style={{ color: 'var(--gold)' }}>■</span>
+                  {' '}Directive &nbsp;&nbsp;
+                  <span style={{ color: 'var(--jade-light)' }}>■</span>
+                  {' '}Department &nbsp;&nbsp;
+                  <span style={{ color: 'var(--saffron)' }}>■</span>
+                  {' '}Date
                 </div>
               </div>
             </div>
@@ -618,13 +697,38 @@ const [c3, r3] = useCountUp(stats.departments)
                   <span className="action-title">AI-Generated Action Plan</span>
                 </div>
                 <div className="action-body">
-                  {(reviewTask?.summary
-                    ?.split('\n') || []).map((s, i) => (
-                    <div className="action-step" key={i}>
-                      <span className="step-num">{String(i+1).padStart(2,'0')}.</span>
-                      <span className="step-text">{s}</span>
-                    </div>
-                  ))}
+                  {
+                    extractedData?.actionPlan?.length > 0
+                      ? (
+                        extractedData.actionPlan.map(
+                          (step, i) => (
+                            <div
+                              className="action-step"
+                              key={i}
+                            >
+                              <span className="step-num">
+                                {
+                                  String(i + 1)
+                                    .padStart(2, '0')
+                                }.
+                              </span>
+                              <span className="step-text">
+                                {step}
+                              </span>
+                            </div>
+                          )
+                        )
+                      ) : (
+                        <div
+                          style={{
+                            color: 'var(--silver)',
+                            padding: '20px 0',
+                          }}
+                        >
+                          No AI action plan generated
+                        </div>
+                      )
+                  }
                 </div>
                 <div className="action-btn-row">
                   <button
